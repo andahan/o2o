@@ -343,6 +343,7 @@ def get_user_merchant_feature(df):
     um4 = um4.groupby(['User_id', 'Merchant_id'], as_index = False).count()
 
     um5tmp = df[((df['Date_received'] != -1) & (df['Date'] != -1))][['User_id', 'Merchant_id','o_date_gap']].copy()
+    um5tmp.replace(-1, np.nan, inplace=True)
     um5 = um5tmp.groupby(['User_id', 'Merchant_id'], as_index=False).mean()
     um5.rename(columns={'o_date_gap': 'o_um_mean_date_gap'}, inplace=True)
 
@@ -371,12 +372,18 @@ def feature_combine_process(feature_base, feature):
     combine user, merchant, and user_merchant feature
     """
     user_feature = get_user_feature(feature)
-    merchant_feature = get_merchant_feature(feature)
-    user_merchant_feature = get_user_merchant_feature(feature)
+    # merchant_feature = get_merchant_feature(feature)
+    # user_merchant_feature = get_user_merchant_feature(feature)
 
     feature = pd.merge(feature_base, user_feature, on='User_id', how='left')
-    feature = pd.merge(feature, merchant_feature, on='Merchant_id', how='left')
-    feature = pd.merge(feature, user_merchant_feature, on=['User_id', 'Merchant_id'], how='left')
+    # feature = pd.merge(feature, merchant_feature, on='Merchant_id', how='left')
+    # feature = pd.merge(feature, user_merchant_feature, on=['User_id', 'Merchant_id'], how='left')
+    feature['o2o_u_buy_count_rate'] = feature['o_u_buy_count'].astype('float') / (feature['o_u_buy_count'].astype('float') + feature['u_buy_count'].astype('float'))
+    feature['o2o_u_coupon_count_rate'] = feature['o_u_coupon_count'].astype('float') / (feature['o_u_coupon_count'].astype('float') + feature['u_coupon_count'].astype('float'))
+    feature['o2o_u_buy_with_coupon_rate'] = feature['o_u_buy_with_coupon'].astype('float') / (feature['o_u_buy_with_coupon'].astype('float') + feature['u_buy_with_coupon'].astype('float'))
+
+
+
     feature = feature.fillna(-1)
 
     return feature

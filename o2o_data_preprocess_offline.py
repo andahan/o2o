@@ -366,8 +366,10 @@ def get_user_merchant_feature(df):
 
 
     um5tmp = df[((df['Date_received'] != -1) & (df['Date'] != -1))][['User_id', 'Merchant_id','date_gap']].copy()
+    um5tmp.replace(-1, np.nan, inplace=True)
     um5 = um5tmp.groupby(['User_id', 'Merchant_id'], as_index=False).mean()
     um5.rename(columns={'date_gap': 'um_mean_date_gap'}, inplace=True)
+
 
 
     user_merchant_feature = pd.merge(um, um1, on = ['User_id','Merchant_id'], how = 'left')
