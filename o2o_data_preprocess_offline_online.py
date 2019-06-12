@@ -309,10 +309,10 @@ def get_merchant_feature(df):
     merchant_feature = pd.merge(merchant_feature, m4, on='Merchant_id', how='left')
 
 
-    merchant_feature['o_m_coupon_use_rate'] = merchant_feature['o_m_sale_with_coupon'].astype('float') / merchant_feature[
-        'm_coupon_count'].astype('float')
-    merchant_feature['o_m_sale_with_coupon_rate'] = merchant_feature['o_m_sale_with_coupon'].astype('float') / \
-                                                  merchant_feature['o_m_sale_count'].astype('float')
+    merchant_feature['o_m_coupon_use_rate'] = merchant_feature['o_m_sale_with_coupon'].astype('float') \
+                                              / merchant_feature['o_m_coupon_count'].astype('float')
+    merchant_feature['o_m_sale_with_coupon_rate'] = merchant_feature['o_m_sale_with_coupon'].astype('float') \
+                                                    / merchant_feature['o_m_sale_count'].astype('float')
     merchant_feature = merchant_feature.fillna(-1)
 
     print(merchant_feature.columns.tolist())
@@ -342,13 +342,19 @@ def get_user_merchant_feature(df):
     um4['o_um_buy_with_coupon'] = 1
     um4 = um4.groupby(['User_id', 'Merchant_id'], as_index = False).count()
 
+    um5tmp = df[((df['Date_received'] != -1) & (df['Date'] != -1))][['User_id', 'Merchant_id','o_date_gap']].copy()
+    um5 = um5tmp.groupby(['User_id', 'Merchant_id'], as_index=False).mean()
+    um5.rename(columns={'o_date_gap': 'o_um_mean_date_gap'}, inplace=True)
+
     #点击次数
-    m4 = df[df.Action == 0].groupby(['User_id','Merchant_id']).size().reset_index(name='o_um_click_count')
+    um6 = df[df.Action == 0].groupby(['User_id','Merchant_id']).size().reset_index(name='o_um_click_count')
 
     user_merchant_feature = pd.merge(um, um1, on = ['User_id','Merchant_id'], how = 'left')
     user_merchant_feature = pd.merge(user_merchant_feature, um2, on = ['User_id','Merchant_id'], how = 'left')
     user_merchant_feature = pd.merge(user_merchant_feature, um3, on = ['User_id','Merchant_id'], how = 'left')
     user_merchant_feature = pd.merge(user_merchant_feature, um4, on = ['User_id','Merchant_id'], how = 'left')
+    user_merchant_feature = pd.merge(user_merchant_feature, um5, on = ['User_id','Merchant_id'], how = 'left')
+    user_merchant_feature = pd.merge(user_merchant_feature, um6, on = ['User_id','Merchant_id'], how = 'left')
     user_merchant_feature = user_merchant_feature.fillna(0)
 
     user_merchant_feature['o_um_buy_rate'] = user_merchant_feature['o_um_buy_count'].astype('float')/user_merchant_feature['o_um_count'].astype('float')
@@ -377,14 +383,6 @@ def feature_combine_process(feature_base, feature):
 
 
 
-'''
-输出字段：
-session级别：['User_id', 'Merchant_id', 'Coupon_id', 'Discount_rate', 'Distance', 'Date_received', 'Date', 'discount_rate', 'discount_man', 'discount_jian', 'discount_type', 'date_gap', 'is_purchase', 'date_received_weekday', 'date_received_weekday_type', 'date_buy_weekday', 'date_buy_weekday_type']
-user级别：['User_id', 'u_coupon_count', 'u_buy_count', 'u_buy_with_coupon', 'u_merchant_count', 'u_min_distance', 'u_max_distance', 'u_mean_distance', 'u_median_distance', 'u_use_coupon_rate', 'u_buy_with_coupon_rate']
-merchant级别：['Merchant_id', 'm_coupon_count', 'm_sale_count', 'm_sale_with_coupon', 'm_min_distance', 'm_max_distance', 'm_mean_distance', 'm_median_distance', 'm_coupon_use_rate', 'm_sale_with_coupon_rate']
-user*merchant级别：['User_id', 'Merchant_id', 'um_count', 'um_buy_count', 'um_coupon_count', 'um_buy_with_coupon', 'um_buy_rate', 'um_coupon_use_rate', 'um_buy_with_coupon_rate']
-'''
-
 if __name__ == '__main__':
     dfoff = pd.read_csv('./o2o_data/ccf_offline_stage1_train.csv')
     dfon = pd.read_csv('./o2o_data/ccf_online_stage1_train.csv')
@@ -393,6 +391,7 @@ if __name__ == '__main__':
 
     # nan --> -1
     dfon = dfon.fillna(-1)
+
 
     # discount process
     dfon = process_discount_data(dfon)
@@ -413,4 +412,7 @@ if __name__ == '__main__':
     feature_base = dfoff_out.copy()
     df_out = feature_combine_process(feature_base, dfon)
 
-    df_out.to_csv(r"./o2o_data/offline_online_preprocess_out.csv", index=False)
+    df_out.to_csv("./o2o_data/offline_online_preprocess_out.csv", index=False)
+
+    df_out_na = df_out.replace(-1, np.nan)
+    df_out_na.to_csv("./o2o_data/offline_online_preprocess_out_na.csv", index=False)
