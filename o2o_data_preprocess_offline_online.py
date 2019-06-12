@@ -378,9 +378,9 @@ def feature_combine_process(feature_base, feature):
     feature = pd.merge(feature_base, user_feature, on='User_id', how='left')
     # feature = pd.merge(feature, merchant_feature, on='Merchant_id', how='left')
     # feature = pd.merge(feature, user_merchant_feature, on=['User_id', 'Merchant_id'], how='left')
-    feature['o2o_u_buy_count_rate'] = feature['o_u_buy_count'].astype('float') / (feature['o_u_buy_count'].astype('float') + feature['u_buy_count'].astype('float'))
-    feature['o2o_u_coupon_count_rate'] = feature['o_u_coupon_count'].astype('float') / (feature['o_u_coupon_count'].astype('float') + feature['u_coupon_count'].astype('float'))
-    feature['o2o_u_buy_with_coupon_rate'] = feature['o_u_buy_with_coupon'].astype('float') / (feature['o_u_buy_with_coupon'].astype('float') + feature['u_buy_with_coupon'].astype('float'))
+    # feature['o2o_u_buy_count_rate'] = feature['o_u_buy_count'].astype('float') / (feature['o_u_buy_count'].astype('float') + feature['u_buy_count'].astype('float'))
+    # feature['o2o_u_coupon_count_rate'] = feature['o_u_coupon_count'].astype('float') / (feature['o_u_coupon_count'].astype('float') + feature['u_coupon_count'].astype('float'))
+    # feature['o2o_u_buy_with_coupon_rate'] = feature['o_u_buy_with_coupon'].astype('float') / (feature['o_u_buy_with_coupon'].astype('float') + feature['u_buy_with_coupon'].astype('float'))
 
 
 
