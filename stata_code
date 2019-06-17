@@ -1,0 +1,360 @@
+
+ -——————————————————————————————————————————————————————————————————————————————————————————
+
+
+
+
+
+
+
+# gen o2o特征 
+
+
+gen o2o_u_count_rate= u_count/(u_count+o_u_count) 
+gen o2o_u_buy_count_rate= u_buy_count/(u_buy_count+o_u_buy_count) 
+gen o2o_u_coupon_count_rate = u_coupon_count/(u_coupon_count+o_u_coupon_count) 
+gen o2o_u_buy_with_coupon_rate  = u_buy_with_coupon/(u_buy_with_coupon+o_u_buy_with_coupon) 
+
+
+
+#关联性-单变量绝对值-session层级  
+
+#um_count
+
+ # um_count(关联度--用um互动表示：包含购买和领券两种行为)
+ # o2o_u_buy_count_rate （搜索距离--用o2o_u线下购买比率表示，线下购买比率越大，线上搜索阻力越大）
+reg date_gap um_count distance o2o_u_buy_count_rate  
+gen um_count_x_distance=um_count*distance   
+gen um_count_x_o2o_buy_count_rate=um_count*o2o_u_buy_count_rate  
+reg date_gap um_count distance o2o_u_buy_count_rate um_count_x_distance  um_count_x_o2o_buy_count_rate 
+
+   
+
+
+
+
+
+
+
+ # um_count(关联度--用um互动表示：包含购买和领券两种行为)
+ # o2o_u_coupon_count_rate  （搜索距离--用o2o_u线下领券比率表示，领线下券比率越大，线上搜索阻力越大）
+reg date_gap um_count distance o2o_u_coupon_count_rate   
+gen um_count_x_o2o_coupon_count_rate=um_count*o2o_u_coupon_count_rate  
+reg date_gap um_count distance o2o_u_coupon_count_rate um_count_x_distance  um_count_x_o2o_coupon_count_rate 
+
+  
+
+ # um_count(关联度--用um互动表示：包含购买和领券两种行为)
+ # o2o_u_buy_with_coupon_rate  （搜索距离--用o2o_u线下用券购买比率表示，线下用券购买比率越大，线上搜索阻力越大）
+reg date_gap um_count distance o2o_u_buy_with_coupon_rate   
+gen um_count_x_o2o_buy_w_coupon_rate=um_count*o2o_u_buy_with_coupon_rate  
+reg date_gap um_count distance o2o_u_buy_with_coupon_rate um_count_x_distance  um_count_x_o2o_buy_w_coupon_rate 
+
+
+
+
+
+# um_buy_count 
+--best
+ # um_buy_count(关联度--用um购买表示：购买行为/普通购买和用券购买)
+ # o2o_u_buy_count_rate （搜索距离--用o2o_u线下购买比率表示，线下购买比率越大，线上搜索阻力越大）
+reg date_gap um_buy_count distance o2o_u_buy_count_rate  
+gen um_buy_cnt_x_distance=um_buy_count*distance   
+gen um_buy_cnt_x_o2o_buy_cnt_rate=um_buy_count*o2o_u_buy_count_rate  
+reg date_gap um_buy_count distance o2o_u_buy_count_rate um_buy_cnt_x_distance  um_buy_cnt_x_o2o_buy_cnt_rate 
+
+  
+
+
+
+
+
+--best control --组合
+reg date_gap um_buy_count distance o2o_u_buy_count_rate u_use_coupon_rate u_merchant_count
+gen um_buy_cnt_x_distance=um_buy_count*distance   
+gen um_buy_cnt_x_o2o_buy_cnt_rate=um_buy_count*o2o_u_buy_count_rate 
+reg date_gap um_buy_count distance o2o_u_buy_count_rate um_buy_cnt_x_distance  um_buy_cnt_x_o2o_buy_cnt_rate u_use_coupon_rate u_merchant_count
+
+
+--best control --组合--稳健型检验--um count
+reg date_gap u_use_coupon_rate u_merchant_count
+reg date_gap um_count distance o2o_u_buy_count_rate u_use_coupon_rate u_merchant_count
+
+gen um_cnt_x_distance=um_count*distance   
+gen um_cnt_x_o2o_buy_cnt_rate=um_count*o2o_u_buy_count_rate 
+
+reg date_gap um_count distance o2o_u_buy_count_rate um_cnt_x_distance  um_cnt_x_o2o_buy_cnt_rate u_use_coupon_rate u_merchant_count
+
+
+--best control --组合--稳健型检验--搜索
+reg date_gap u_use_coupon_rate u_merchant_count
+
+reg date_gap um_buy_count o2o_u_coupon_count_rate u_use_coupon_rate u_merchant_count
+  
+gen um_buy_cnt_x_o2o_coupon_cnt_rate=um_buy_count*o2o_u_coupon_count_rate 
+
+reg date_gap um_buy_count o2o_u_coupon_count_rate um_buy_cnt_x_o2o_coupon_cnt_rate u_use_coupon_rate u_merchant_count
+
+
+
+
+
+
+
+
+--豪斯曼检验
+reg date_gap um_buy_count distance o2o_u_buy_count_rate u_use_coupon_rate u_merchant_count
+estimates store ols
+ivregress 2sls date_gap  distance o2o_u_buy_count_rate u_use_coupon_rate u_merchant_count (um_buy_count = m_count)
+estimates store iv
+
+
+
+
+
+
+
+
+
+
+
+
+--best control --distance
+reg date_gap um_buy_count distance o2o_u_buy_count_rate um_buy_cnt_x_distance   u_use_coupon_rate u_merchant_count
+
+
+--best control --distance
+reg date_gap um_buy_count distance o2o_u_buy_count_rate um_buy_cnt_x_o2o_buy_cnt_rate  u_use_coupon_rate u_merchant_count
+
+
+--描述性统计
+sum date_gap um_buy_count distance o2o_u_buy_count_rate u_use_coupon_rate u_merchant_count
+
+
+cor
+
+
+# 调节作图
+reg date_gap um_buy_count distance um_buy_cnt_x_distance
+
+reg date_gap um_buy_count o2o_u_buy_count_rate um_buy_cnt_x_o2o_buy_cnt_rate
+——————————————————————————————————————————————————————————————————————————————————————
+
+  
+
+ # um_buy_count(关联度--用um购买表示：购买行为/普通购买和用券购买)
+  # o2o_u_coupon_count_rate  （搜索距离--用o2o_u线下购买比率表示，线下购买比率越大，线上搜索阻力越大）
+reg date_gap um_buy_count distance o2o_u_coupon_count_rate   
+gen um_buy_cnt_x_o2o_coupon_cnt_rate=um_buy_count*o2o_u_coupon_count_rate  
+reg date_gap um_buy_count distance o2o_u_coupon_count_rate um_buy_cnt_x_distance  um_buy_cnt_x_o2o_coupon_cnt_rate 
+
+  
+
+ # um_buy_count(关联度--用um购买表示：购买行为/普通购买和用券购买)
+ # o2o_u_buy_with_coupon_rate  （搜索距离--用o2o_u线下领券比率表示，领线下券比率越大，线上搜索阻力越大）
+reg date_gap um_buy_count distance o2o_u_buy_with_coupon_rate   
+gen um_buy_cnt_x_o2o_buy_w_c_rate=um_buy_count*o2o_u_buy_with_coupon_rate  
+reg date_gap um_buy_count distance o2o_u_buy_with_coupon_rate um_buy_cnt_x_distance  um_buy_cnt_x_o2o_buy_w_c_rate 
+
+
+# um_coupon_count 
+
+ # um_coupon_count(关联度--用um领券表示)
+ # o2o_u_buy_count_rate （搜索距离--用o2o_u线下购买比率表示，线下购买比率越大，线上搜索阻力越大）
+reg date_gap um_coupon_count distance o2o_u_buy_count_rate  
+gen um_c_cnt_x_distance=um_coupon_count*distance   
+gen um_c_cnt_x_o2o_buy_cnt_rate=um_coupon_count*o2o_u_buy_count_rate  
+reg date_gap um_coupon_count distance o2o_u_buy_count_rate um_c_cnt_x_distance  um_c_cnt_x_o2o_buy_cnt_rate 
+
+  
+  
+
+ # um_coupon_count(关联度--用um领券表示)
+  # o2o_u_coupon_count_rate  （搜索距离--用o2o_u线下购买比率表示，线下购买比率越大，线上搜索阻力越大）
+reg date_gap um_coupon_count distance o2o_u_coupon_count_rate   
+gen um_c_cnt_x_o2o_coupon_cnt_rate=um_coupon_count*o2o_u_coupon_count_rate  
+reg date_gap um_coupon_count distance o2o_u_coupon_count_rate um_c_cnt_x_distance  um_c_cnt_x_o2o_coupon_cnt_rate 
+
+  
+
+ # um_coupon_count(关联度--用um领券)
+ # o2o_u_buy_with_coupon_rate  （搜索距离--用o2o_u线下领券比率表示，领线下券比率越大，线上搜索阻力越大）
+reg date_gap um_coupon_count distance o2o_u_buy_with_coupon_rate   
+gen um_c_cnt_x_o2o_buy_w_c_rate=um_coupon_count*o2o_u_buy_with_coupon_rate  
+reg date_gap um_coupon_count distance o2o_u_buy_with_coupon_rate um_c_cnt_x_distance  um_c_cnt_x_o2o_buy_w_c_rate 
+
+
+
+
+#关联性-单变量绝对值-session层级 
+
+  
+
+reg date_gap um_count distance  
+
+gen um_count_x_distance=um_count*distance  
+
+reg date_gap um_count distance um_count_x_distance  
+
+  
+
+ 
+
+reg date_gap um_buy_count distance  
+
+gen um_buy_count_x_distance=um_buy_count*distance  
+
+reg date_gap um_buy_count distance um_buy_count_x_distance  
+
+  
+
+  
+
+  
+
+reg date_gap um_coupon_count distance  
+
+gen um_coupon_count_x_distance=um_coupon_count*distance  
+
+reg date_gap um_coupon_count distance um_coupon_count_x_distance  
+
+  
+
+  
+
+reg  date_gap um_buy_with_coupon distance  
+
+gen um_buy_with_coupon_x_distance=um_buy_with_coupon*distance  
+
+reg date_gap um_buy_with_coupon distance um_buy_with_coupon_x_distance  
+
+  
+
+  
+
+  
+
+#关联性-单变量比率值--session层级 
+
+  
+
+reg date_gap um_buy_rate distance  
+
+gen um_buy_rate_x_distance=um_buy_rate*distance  
+
+reg date_gap um_buy_rate distance um_buy_rate_x_distance  
+
+  
+
+  
+
+  
+
+reg date_gap um_coupon_use_rate distance  
+
+gen um_coupon_use_rate_x_distance=um_coupon_use_rate*distance  
+
+reg date_gap um_coupon_use_rate distance um_coupon_use_rate_x_distance  
+
+  
+
+  
+
+  
+
+reg  date_gap um_buy_with_coupon_rate distance  
+
+gen um_buy_w_coupon_rate_x_distance  
+
+=um_buy_with_coupon_rate*distance  
+
+reg date_gap um_buy_with_coupon_rate distance um_buy_w_coupon_rate_x_distance  
+
+ 
+
+ 
+
+ 
+
+  
+
+#关联性-组合变量绝对值平均——>由于组合变量有重叠性，所以不适合用组合变量，so，放到稳健型检验里替换关联性变量测度。 
+
+ 
+
+ 
+
+ 
+
+#关联性-单变量绝对值-全um层级 
+
+  
+
+reg um_mean_date_gap um_count distance  
+
+gen um_count_x_distance=um_count*distance  
+
+reg um_mean_date_gap um_count distance um_count_x_distance  
+
+  
+
+reg um_mean_date_gap um_buy_count distance  
+
+gen um_buy_count_x_distance=um_buy_count*distance  
+
+reg um_mean_date_gap um_buy_count distance um_buy_count_x_distance  
+
+  
+
+reg um_mean_date_gap um_coupon_count distance  
+
+gen um_coupon_count_x_distance=um_coupon_count*distance  
+
+reg um_mean_date_gap um_coupon_count distance um_coupon_count_x_distance  
+
+  
+
+reg  um_mean_date_gap um_buy_with_coupon distance  
+
+gen um_buy_with_coupon_x_distance=um_buy_with_coupon*distance  
+
+reg um_mean_date_gap um_buy_with_coupon distance um_buy_with_coupon_x_distance  
+
+  
+
+  
+
+  
+
+#关联性-单变量比率值-全um层级 
+
+  
+
+reg um_mean_date_gap um_buy_rate distance  
+
+gen um_buy_rate_x_distance=um_buy_rate*distance  
+
+reg um_mean_date_gap um_buy_rate distance um_buy_rate_x_distance  
+
+  
+
+  
+
+reg um_mean_date_gap um_coupon_use_rate distance  
+
+gen um_coupon_use_rate_x_distance=um_coupon_use_rate*distance  
+
+reg um_mean_date_gap um_coupon_use_rate distance um_coupon_use_rate_x_distance  
+
+  
+
+  
+
+reg  um_mean_date_gap um_buy_with_coupon_rate distance  
+
+gen um_buy_with_coupon_rate_x_distance=um_buy_with_coupon_rate*distance  
+
+reg um_mean_date_gap um_buy_with_coupon_rate distance um_buy_with_coupon_rate_x_distance  
+
+ 
+
